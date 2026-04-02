@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Mini ETL System{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Design Tokens ─────────────────────────────────────── */
+    :root{
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --accent:    #58a6ff;
+      --accent2:   #1f6feb;
+      --success:   #3fb950;
+      --danger:    #f85149;
+      --warning:   #d29922;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --radius:    12px;
+      --shadow:    0 4px 24px rgba(0,0,0,.5);
+    }
+
+    /* ── Reset / Base ──────────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Inter',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* ── Nav ───────────────────────────────────────────────── */
+    nav{
+      background:var(--surface);
+      border-bottom:1px solid var(--border);
+      padding:.9rem 2rem;
+      display:flex;
+      align-items:center;
+      gap:1.5rem;
+      position:sticky;top:0;z-index:100;
+      backdrop-filter:blur(12px);
+    }
+    .nav-brand{
+      font-weight:800;font-size:1.15rem;
+      background:linear-gradient(135deg,var(--accent),#a5d6ff);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      text-decoration:none;margin-right:auto;
+    }
+    nav a{
+      color:var(--muted);text-decoration:none;font-size:.9rem;
+      font-weight:500;padding:.35rem .75rem;border-radius:6px;
+      transition:background .2s,color .2s;
+    }
+    nav a:hover,nav a.active{background:var(--surface2);color:var(--text)}
+
+    /* ── Main wrapper ──────────────────────────────────────── */
+    main{flex:1;max-width:1100px;width:100%;margin:0 auto;padding:2rem 1.5rem}
+
+    /* ── Cards ─────────────────────────────────────────────── */
+    .card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);padding:1.75rem;
+      box-shadow:var(--shadow);
+    }
+    .card + .card{margin-top:1.5rem}
+
+    /* ── Headings ──────────────────────────────────────────── */
+    h1{font-size:2rem;font-weight:800;margin-bottom:.25rem}
+    h2{font-size:1.25rem;font-weight:700;margin-bottom:1rem}
+    .subtitle{color:var(--muted);font-size:.95rem;margin-bottom:1.5rem}
+
+    /* ── Stat grid ─────────────────────────────────────────── */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .stat{
+      background:var(--surface2);border:1px solid var(--border);
+      border-radius:10px;padding:1.25rem;text-align:center;
+      transition:transform .2s,box-shadow .2s;
+    }
+    .stat:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.45)}
+    .stat-value{font-size:2rem;font-weight:800;color:var(--accent)}
+    .stat-label{color:var(--muted);font-size:.8rem;margin-top:.25rem;text-transform:uppercase;letter-spacing:.05em}
+
+    /* ── Buttons ───────────────────────────────────────────── */
+    .btn{
+      display:inline-flex;align-items:center;gap:.5rem;
+      padding:.6rem 1.3rem;border-radius:8px;font-size:.9rem;
+      font-weight:600;cursor:pointer;border:none;text-decoration:none;
+      transition:opacity .2s,transform .15s;
+    }
+    .btn:hover{opacity:.88;transform:translateY(-1px)}
+    .btn-primary{background:var(--accent2);color:#fff}
+    .btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+
+    /* ── File upload zone ──────────────────────────────────── */
+    .upload-zone{
+      border:2px dashed var(--border);border-radius:var(--radius);
+      padding:2.5rem;text-align:center;cursor:pointer;
+      transition:border-color .25s,background .25s;
+    }
+    .upload-zone:hover,.upload-zone.drag-over{
+      border-color:var(--accent);background:rgba(88,166,255,.06);
+    }
+    .upload-zone input[type=file]{display:none}
+    .upload-icon{font-size:3rem;margin-bottom:.75rem}
+    .upload-label{font-weight:600;margin-bottom:.4rem}
+    .upload-hint{color:var(--muted);font-size:.85rem}
+    .file-chosen{
+      margin-top:1rem;padding:.5rem .9rem;background:var(--surface2);
+      border-radius:6px;display:inline-block;font-size:.85rem;color:var(--accent);
+    }
+
+    /* ── Tables ────────────────────────────────────────────── */
+    .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+    table{width:100%;border-collapse:collapse;font-size:.875rem}
+    thead{background:var(--surface2)}
+    th{
+      padding:.75rem 1rem;text-align:left;font-weight:600;
+      text-transform:uppercase;font-size:.75rem;letter-spacing:.05em;
+      color:var(--muted);border-bottom:1px solid var(--border);
+    }
+    td{padding:.7rem 1rem;border-bottom:1px solid var(--border)}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(255,255,255,.025)}
+
+    /* ── Badges ────────────────────────────────────────────── */
+    .badge{
+      display:inline-block;padding:.2rem .6rem;border-radius:20px;
+      font-size:.75rem;font-weight:600;
+    }
+    .badge-success{background:rgba(63,185,80,.15);color:var(--success)}
+    .badge-danger {background:rgba(248,81,73,.15);color:var(--danger)}
+    .badge-warning{background:rgba(210,153,34,.15);color:var(--warning)}
+    .badge-info   {background:rgba(88,166,255,.15);color:var(--accent)}
+
+    /* ── Alerts ────────────────────────────────────────────── */
+    .alert{
+      padding:.85rem 1.1rem;border-radius:8px;margin-bottom:1rem;
+      font-size:.9rem;display:flex;align-items:flex-start;gap:.6rem;
+    }
+    .alert-success{background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);color:var(--success)}
+    .alert-error  {background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);color:var(--danger)}
+
+    /* ── Steps ─────────────────────────────────────────────── */
+    .steps{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .step{
+      flex:1;min-width:150px;background:var(--surface2);
+      border:1px solid var(--border);border-radius:10px;
+      padding:1rem;text-align:center;position:relative;
+    }
+    .step-num{
+      width:32px;height:32px;border-radius:50%;
+      background:var(--accent2);color:#fff;
+      font-weight:700;font-size:.85rem;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto .6rem;
+    }
+    .step-title{font-weight:700;font-size:.9rem}
+    .step-desc{color:var(--muted);font-size:.78rem;margin-top:.3rem}
+
+    /* ── Footer ────────────────────────────────────────────── */
+    footer{
+      text-align:center;padding:1.2rem;
+      color:var(--muted);font-size:.8rem;
+      border-top:1px solid var(--border);
+    }
+
+    /* ── Utility ───────────────────────────────────────────── */
+    .flex{display:flex;align-items:center;gap:.75rem}
+    .mt-1{margin-top:.5rem}.mt-2{margin-top:1rem}.mt-3{margin-top:1.5rem}
+    .text-muted{color:var(--muted)}
+    .empty-state{text-align:center;padding:3rem;color:var(--muted)}
+    .empty-state .empty-icon{font-size:3rem;margin-bottom:.5rem}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="{% url 'dashboard' %}">Mini ETL System</a>
+  <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+  <a href="{% url 'etl' %}"       {% if request.resolver_match.url_name == 'etl'       %}class="active"{% endif %}>Upload CSV</a>
+  <a href="{% url 'results' %}"   {% if request.resolver_match.url_name == 'results'   %}class="active"{% endif %}>Results</a>
+  <a href="/admin/" target="_blank">Admin ↗</a>
+</nav>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer>Mini ETL System &mdash; Django Lab Activity &bull; IT322 Integrative Programming</footer>
+
+<script>
+  /* Drag-and-drop enhancement for file upload zone */
+  document.addEventListener('DOMContentLoaded',()=>{
+    const zone=document.querySelector('.upload-zone');
+    if(!zone)return;
+    const input=zone.querySelector('input[type=file]');
+    const chosen=zone.querySelector('.file-chosen');
+    zone.addEventListener('click',()=>input.click());
+    zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over')});
+    zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();zone.classList.remove('drag-over');
+      if(e.dataTransfer.files.length){
+        input.files=e.dataTransfer.files;
+        updateLabel(e.dataTransfer.files[0].name);
+      }
+    });
+    input.addEventListener('change',()=>{
+      if(input.files.length)updateLabel(input.files[0].name);
+    });
+    function updateLabel(name){
+      if(chosen)chosen.textContent=name;
+    }
+  });
+</script>
+</body>
+</html>

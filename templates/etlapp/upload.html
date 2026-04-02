@@ -1,0 +1,67 @@
+{% extends "etlapp/base.html" %}
+{% block title %}Upload CSV — Mini ETL System{% endblock %}
+
+{% block content %}
+<h1>Upload &amp; Run ETL</h1>
+<p class="subtitle">Upload a CSV file to trigger the full Extract → Transform → Load pipeline.</p>
+
+<!-- Messages -->
+{% for message in messages %}
+  <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+    <span>{% if message.tags == 'error' %}Error{% else %}OK{% endif %}</span>
+    {{ message }}
+  </div>
+{% endfor %}
+
+<div class="card">
+  <h2>Select CSV File</h2>
+  <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.25rem">
+    Your CSV must have the following columns: <code style="background:var(--surface2);padding:.15rem .4rem;border-radius:4px">id, name, course</code>
+  </p>
+
+  <form method="POST" enctype="multipart/form-data" id="etl-form">
+    {% csrf_token %}
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" name="csvfile" id="csvfile" accept=".csv" required/>
+      <div class="upload-icon">[ CSV ]</div>
+      <div class="upload-label">Drag &amp; drop your CSV here</div>
+      <div class="upload-hint">or click to browse your files</div>
+      <div class="file-chosen">No file chosen</div>
+    </div>
+
+    <div class="mt-3 flex">
+      <button type="submit" class="btn btn-primary" id="run-btn">Run ETL Pipeline</button>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline">← Back to Dashboard</a>
+      <span id="running-msg" style="display:none;color:var(--muted);font-size:.9rem">Processing pipeline...</span>
+    </div>
+  </form>
+</div>
+
+<!-- CSV Example -->
+<div class="card">
+  <h2>Sample CSV Format</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>id</th><th>name</th><th>course</th></tr></thead>
+      <tbody>
+        <tr><td>2023001</td><td>Juan Dela Cruz</td><td>BSIT</td></tr>
+        <tr><td>2023002</td><td><em style="color:var(--warning)">(empty)</em></td><td>BSCS</td></tr>
+        <tr><td>2023003</td><td>Ana Lopez</td><td><em style="color:var(--warning)">(empty)</em></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="mt-2" style="color:var(--muted);font-size:.85rem">
+    Missing <strong>name</strong> values will be replaced with <code style="background:var(--surface2);padding:.1rem .35rem;border-radius:4px">Unknown</code>.
+    Missing <strong>course</strong> values will be replaced with <code style="background:var(--surface2);padding:.1rem .35rem;border-radius:4px">NOT ASSIGNED</code>.
+    Names will be Title-cased and courses will be UPPER-cased.
+  </p>
+</div>
+
+<script>
+  document.getElementById('etl-form').addEventListener('submit', function(){
+    document.getElementById('run-btn').disabled = true;
+    document.getElementById('run-btn').textContent = 'Running...';
+    document.getElementById('running-msg').style.display = 'inline';
+  });
+</script>
+{% endblock %}

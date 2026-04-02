@@ -1,0 +1,104 @@
+{% extends "etlapp/base.html" %}
+{% block title %}Dashboard — Mini ETL System{% endblock %}
+
+{% block content %}
+<h1>ETL Pipeline Dashboard</h1>
+<p class="subtitle">Monitor your Extract → Transform → Load pipeline at a glance.</p>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-value">{{ total_raw }}</div>
+    <div class="stat-label">Raw Records</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">{{ total_clean }}</div>
+    <div class="stat-label">Clean Records</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:
+      {% if last_log %}
+        {% if last_log.status == 'SUCCESS' %}var(--success)
+        {% elif last_log.status == 'FAILED' %}var(--danger)
+        {% else %}var(--warning){% endif %}
+      {% else %}var(--muted){% endif %}">
+      {{ last_log.status|default:"—" }}
+    </div>
+    <div class="stat-label">Last Pipeline Status</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="font-size:1.1rem">
+      {{ last_log.run_at|date:"M d, H:i"|default:"Never" }}
+    </div>
+    <div class="stat-label">Last Run</div>
+  </div>
+</div>
+
+<!-- Pipeline Diagram -->
+<div class="card">
+  <h2>Pipeline Stages</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-title">EXTRACT</div>
+      <div class="step-desc">Upload CSV &amp; pull raw records into staging table</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-title">TRANSFORM</div>
+      <div class="step-desc">Clean nulls, title-case names, uppercase course codes</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-title">LOAD</div>
+      <div class="step-desc">Write transformed data to the clean reporting table</div>
+    </div>
+  </div>
+  <div class="flex">
+    <a href="{% url 'etl' %}" class="btn btn-primary">Upload &amp; Run ETL</a>
+    <a href="{% url 'results' %}" class="btn btn-outline">View Results</a>
+  </div>
+</div>
+
+<!-- Recent Logs -->
+<div class="card">
+  <h2>Recent Pipeline Runs</h2>
+  {% if logs %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date / Time</th>
+          <th>File</th>
+          <th>Extracted</th>
+          <th>Loaded</th>
+          <th>Status</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.run_at|date:"Y-m-d H:i:s" }}</td>
+          <td>{{ log.filename }}</td>
+          <td>{{ log.rows_extracted }}</td>
+          <td>{{ log.rows_loaded }}</td>
+          <td>
+            {% if log.status == 'SUCCESS' %}<span class="badge badge-success">Success</span>
+            {% elif log.status == 'FAILED' %}<span class="badge badge-danger">Failed</span>
+            {% else %}<span class="badge badge-warning">Running</span>
+            {% endif %}
+          </td>
+          <td class="text-muted" style="font-size:.8rem;max-width:260px">{{ log.message|truncatechars:80 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>No pipeline runs yet. <a href="{% url 'etl' %}" style="color:var(--accent)">Upload a CSV to get started.</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

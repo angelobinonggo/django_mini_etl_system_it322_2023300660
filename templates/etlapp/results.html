@@ -1,0 +1,152 @@
+{% extends "etlapp/base.html" %}
+{% block title %}Results — Mini ETL System{% endblock %}
+
+{% block content %}
+<h1>ETL Results</h1>
+<p class="subtitle">Side-by-side comparison of raw extracted data vs. clean transformed data.</p>
+
+<div class="flex mt-1 mb-2">
+  <a href="{% url 'etl' %}" class="btn btn-primary">Run Another ETL</a>
+  <a href="{% url 'dashboard' %}" class="btn btn-outline">Back to Dashboard</a>
+</div>
+
+<!-- Stats row -->
+<div class="stats" style="margin-bottom:1.5rem">
+  <div class="stat">
+    <div class="stat-value">{{ raw_records.count }}</div>
+    <div class="stat-label">Raw Records</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:var(--success)">{{ clean_records.count }}</div>
+    <div class="stat-label">Clean Records</div>
+  </div>
+</div>
+
+<!-- Side-by-side tables -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+
+  <!-- RAW TABLE -->
+  <div class="card">
+    <h2 style="display:flex;align-items:center;gap:.5rem">
+      <span class="badge badge-warning">RAW</span> StudentRaw (Staging)
+    </h2>
+    {% if raw_records %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>ID</th><th>Name</th><th>Course</th></tr>
+        </thead>
+        <tbody>
+          {% for r in raw_records %}
+          <tr>
+            <td class="text-muted">{{ forloop.counter }}</td>
+            <td>{{ r.student_id }}</td>
+            <td>
+              {% if r.name %}{{ r.name }}
+              {% else %}<em class="text-muted" style="color:var(--danger)">(null)</em>{% endif %}
+            </td>
+            <td>
+              {% if r.course %}{{ r.course }}
+              {% else %}<em class="text-muted" style="color:var(--danger)">(null)</em>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p>No raw data yet.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- CLEAN TABLE -->
+  <div class="card">
+    <h2 style="display:flex;align-items:center;gap:.5rem">
+      <span class="badge badge-success">CLEAN</span> StudentClean (Target)
+    </h2>
+    {% if clean_records %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>ID</th><th>Full Name</th><th>Course</th></tr>
+        </thead>
+        <tbody>
+          {% for r in clean_records %}
+          <tr>
+            <td class="text-muted">{{ forloop.counter }}</td>
+            <td>{{ r.student_id }}</td>
+            <td style="color:var(--success)">{{ r.full_name }}</td>
+            <td><span class="badge badge-info">{{ r.course }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p>No clean data yet. <a href="{% url 'etl' %}" style="color:var(--accent)">Upload a CSV to run the pipeline.</a></p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Transformation legend -->
+<div class="card mt-2">
+  <h2>Transformations Applied</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem">
+      <div style="font-weight:700;margin-bottom:.4rem">Null Handling</div>
+      <div class="text-muted" style="font-size:.85rem">
+        Missing <code>name</code> → <strong>Unknown</strong><br>
+        Missing <code>course</code> → <strong>NOT ASSIGNED</strong>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem">
+      <div style="font-weight:700;margin-bottom:.4rem">Text Standardization</div>
+      <div class="text-muted" style="font-size:.85rem">
+        Names converted to <strong>Title Case</strong><br>
+        Courses converted to <strong>UPPER CASE</strong>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem">
+      <div style="font-weight:700;margin-bottom:.4rem">Field Mapping</div>
+      <div class="text-muted" style="font-size:.85rem">
+        <code>name</code> → <code>full_name</code><br>
+        <code>id</code> → <code>student_id</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent logs -->
+<div class="card mt-2">
+  <h2>Pipeline Logs</h2>
+  {% if logs %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>File</th><th>Extracted</th><th>Loaded</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.run_at|date:"Y-m-d H:i:s" }}</td>
+          <td>{{ log.filename }}</td>
+          <td>{{ log.rows_extracted }}</td>
+          <td>{{ log.rows_loaded }}</td>
+          <td>
+            {% if log.status == 'SUCCESS' %}<span class="badge badge-success">Success</span>
+            {% elif log.status == 'FAILED' %}<span class="badge badge-danger">Failed</span>
+            {% else %}<span class="badge badge-warning">Running</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>No logs yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}
